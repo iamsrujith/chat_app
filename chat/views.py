@@ -20,8 +20,20 @@ def home(request):
         current_user = User.objects.get(pk=request.user.pk)
         if current_user.in_chat:
             current_user.in_chat = False
+        if current_user.is_ready:
+            current_user.is_ready = False
         current_user.save()
     return render(request, 'home.html')
+
+
+@login_required
+def connect(request):
+    if request.user is not None:
+        current_user = User.objects.get(pk=request.user.pk)
+        if not current_user.is_ready:
+            current_user.is_ready = True
+        current_user.save()
+    return render(request, 'connect.html')
 
 
 @login_required
@@ -70,6 +82,8 @@ def login_view(request):
 def logout_view(request):
     user = User.objects.filter(pk=request.user.pk).first()
     user.is_online = False
+    user.in_chat = False
+    user.is_ready = False
     user.save()
     logout(request)
     return redirect('login')

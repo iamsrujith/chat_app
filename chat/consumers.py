@@ -19,8 +19,6 @@ class ChatConsumer(WebsocketConsumer):
         )
 
         self.accept()
-        # Match users based on interests
-        self.match_users()
 
     def disconnect(self, close_code):
         # Leave room group
@@ -58,20 +56,47 @@ class ChatConsumer(WebsocketConsumer):
         }))
         # self.send(text_data=json.dumps({'message': message}))
 
+
+class MatchingConsumer(WebsocketConsumer):
+    def connect(self):
+        self.accept()
+        # Match users based on interests
+        async_to_sync(self.match_users)()
+
+    def disconnect(self, close_code):
+        pass
+
+    def receive(self, text_data):
+        text_data_json = json.loads(text_data)
+        redirect = text_data_json['redirect'].split("/chat/")[1]
+        room_name = f"chat_{redirect}"
+        async_to_sync(self.channel_layer.group_send)(
+            room_name,
+            {
+                'type': 'chat_message',
+                'message': text_data_json['redirect'],
+            }
+        )
+
     @database_sync_to_async
     def match_users(self):
         user = self.scope['user']
-        online_users = User.objects.filter(is_online=True).exclude(pk=user.pk)
-        matched_users = online_users.filter(interests__in=user.interests.all())
+        online_users = User.objects.filter(is_online=True, is_ready=True).exclude(pk=user.pk)
+        matched_users = []
+        for i in online_users:
+            for interest in i.interests:
+                if interest in user.interests:
+                    matched_users.append(i)
+                    break
 
-        if matched_users.exists():
+        if matched_users:
             matched_user = random.choice(matched_users)
         else:
             matched_user = random.choice(online_users)
 
-        # Create a chat room name based on user IDs
-        room_name = f"{user.pk}-{matched_user.pk}"
-        print(room_name)
-
+        if user.pk >= matched_user.pk:
+            room_name = f"{user.pk}-{matched_user.pk}"
+        else:
+            room_name = f"{matched_user.pk}-{user.pk}"
         # Redirect the users to the chat room
         self.send(text_data=json.dumps({'redirect': f'/chat/{room_name}'}))

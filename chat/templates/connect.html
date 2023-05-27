@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+{{ request.user.id|json_script:"user" }}
+<h1>Connecting...</h1>
+{% endblock %}
+{% block script %}
+<script src="{% static 'js/matching.js' %}"></script>
+{% endblock %}
