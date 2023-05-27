@@ -9,13 +9,15 @@
       <label class="form-check-label" for="flexSwitchCheckChecked" id="statusLabel">Online</label>
     </div>
 </div>
-<a href="{% url 'chat' room_name='hihi' %}">Join chat</a>
+<button id="joinChat" class="btn-primary">Join chat</button>
+<!--<a href="{% url 'chat' room_name='hihi' %}">Join chat</a>-->
 {% endblock %}
 {% block script %}
 <script>
 $(document).ready(function() {
   var user = {{ user.pk }};
-
+  var chat_room = "";
+  console.log(user)
   $('#flexSwitchCheckChecked').change(function() {
     console.log("checked");
     var isChecked = $(this).prop('checked');
@@ -36,6 +38,37 @@ $(document).ready(function() {
       }
     });
   });
+
+  $('#joinChat').click(function() {
+    console.log("join chat clicked");
+
+    $.ajax({
+      url: '/match-user/',
+      method: 'GET',
+      data: {
+        user: user,
+      },
+      success: function(response) {
+        console.log(response);
+        if (response) {
+          chat_room = response
+          window.location.href = response;
+        }
+        console.log(chat_room, "+++")
+      },
+      error: function(xhr, status, error) {
+        console.error(error);
+      }
+    });
+  });
+
+<!--    var user = {{ user.pk }};-->
+<!--    var socket = new WebSocket('ws://' + window.location.host + '//');-->
+<!--    -->
+<!--    socket.onmessage = function(event) {-->
+<!--        var message = event.data;-->
+<!--        window.location.href = message;-->
+<!--    };-->
 });
 </script>
 {% endblock %}

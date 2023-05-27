@@ -1,5 +1,7 @@
 import random
 
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 from django.contrib.auth import get_user_model, authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
@@ -14,11 +16,21 @@ user = get_user_model()
 
 @login_required
 def home(request):
+    if request.user is not None:
+        current_user = User.objects.get(pk=request.user.pk)
+        if current_user.in_chat:
+            current_user.in_chat = False
+        current_user.save()
     return render(request, 'home.html')
 
 
 @login_required
 def chat(request, room_name):
+    if request.user is not None:
+        current_user = User.objects.get(pk=request.user.pk)
+        if not current_user.in_chat:
+            current_user.in_chat = True
+        current_user.save()
     return render(request, 'index.html')
 
 
@@ -46,6 +58,8 @@ def login_view(request):
                 user.save()
                 return redirect('home')
     else:
+        if request.user.is_authenticated:
+            return redirect('home')
         form = AuthenticationForm()
         form.fields['username'].label = 'Email'
 
@@ -61,23 +75,39 @@ def logout_view(request):
     return redirect('login')
 
 
-# @login_required
-# def match_users(request):
-#     user = request.user
-#     online_users = User.objects.filter(is_online=True).exclude(pk=user.pk)
-#     matched_users = online_users.filter(interests__in=user.interests.all())
-#
-#     if matched_users.exists():
-#         matched_user = random.choice(matched_users)
-#     else:
-#         matched_user = random.choice(online_users)
-#
-#     # Create a chat room name based on user IDs
-#     room_name = f"{user.pk}-{matched_user.pk}"
-#     print(room_name)
-#
-#     # Redirect the users to the chat room
-#     self.send(text_data=json.dumps({'redirect': f'/chat/{room_name}'}))
+@login_required
+def match_users(request):
+    user = request.user
+    online_users = User.objects.filter(is_online=True).exclude(pk=user.pk)
+    matched_users = []
+    for i in online_users:
+        for interest in i.interests:
+            if interest in user.interests:
+                matched_users.append(i)
+                break
+
+    if matched_users:
+        matched_user = random.choice(matched_users)
+    else:
+        matched_user = random.choice(online_users)
+
+    # Create a chat room name based on user IDs
+    room_name = f"{user.pk}-{matched_user.pk}"
+    # print(room_name)
+
+    # Get the channel layer
+    channel_layer = get_channel_layer()
+
+    # Send the redirect message to the matched user's channel group
+    async_to_sync(channel_layer.group_send)(
+        f"chat_{room_name}",
+        {
+            'type': 'chat_message',
+            'text': f'/chat/{room_name}'
+        }
+    )
+
+    return HttpResponse(f'/chat/{room_name}')
 
 
 def update_status(request):
@@ -95,4 +125,3 @@ def update_status(request):
 
     # Return the updated content as HTTP response
     return HttpResponse(updated_status)
-
