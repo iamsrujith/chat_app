@@ -32,10 +32,6 @@ class ChatConsumer(WebsocketConsumer):
         print(text_data_json)
         message = text_data_json["message"]
         username = text_data_json["username"]
-        # self.send(text_data=json.dumps({'message': message,
-        #                                 'username': username}))
-
-        # Send the message to the chat room group
         async_to_sync(self.channel_layer.group_send)(
             self.room_group_name,
             {
@@ -47,42 +43,58 @@ class ChatConsumer(WebsocketConsumer):
 
     def chat_message(self, event):
         # Send the message to the WebSocket
-        message = event['message']
-        username = event['username']
-        # Send the message to the WebSocket
-        self.send(text_data=json.dumps({
-            'message': message,
-            'username': username
-        }))
-        # self.send(text_data=json.dumps({'message': message}))
+        try:
+            print(event)
+            message = event['message']
+            username = event['username']
+            # Send the message to the WebSocket
+            self.send(text_data=json.dumps({
+                'message': message,
+                'username': username
+            }))
+        except KeyError:
+            pass
+
+    def redirect_to_chat(self, event):
+        redirect_url = event['redirect']
+        self.send(text_data=json.dumps({'redirect': redirect_url}))
 
 
 class MatchingConsumer(WebsocketConsumer):
     def connect(self):
+        self.room_group_name = 'matching'
+        async_to_sync(self.channel_layer.group_add)(
+            self.room_group_name,
+            self.channel_name
+        )
         self.accept()
-        # Match users based on interests
         async_to_sync(self.match_users)()
 
     def disconnect(self, close_code):
-        pass
+        self.channel_layer.group_discard('matching_group', self.channel_name)
 
     def receive(self, text_data):
-        text_data_json = json.loads(text_data)
-        redirect = text_data_json['redirect'].split("/chat/")[1]
-        room_name = f"chat_{redirect}"
-        async_to_sync(self.channel_layer.group_send)(
-            room_name,
-            {
-                'type': 'chat_message',
-                'message': text_data_json['redirect'],
-            }
-        )
+        try:
+            text_data_json = json.loads(text_data)
+            print(text_data_json, "cdcdxsc")
+            redirect = text_data_json["redirect"]
+            # self.send(text_data=json.dumps({'redirect': redirect}))
+            async_to_sync(self.channel_layer.group_send)(
+                self.room_group_name,
+                {
+                    'type': 'send_redirect',
+                    'redirect': redirect,
+                }
+            )
+        except KeyError:
+            pass
 
     @database_sync_to_async
     def match_users(self):
         user = self.scope['user']
         online_users = User.objects.filter(is_online=True, is_ready=True).exclude(pk=user.pk)
         matched_users = []
+        matched_user = []
         for i in online_users:
             for interest in i.interests:
                 if interest in user.interests:
@@ -92,11 +104,19 @@ class MatchingConsumer(WebsocketConsumer):
         if matched_users:
             matched_user = random.choice(matched_users)
         else:
-            matched_user = random.choice(online_users)
+            try:
+                matched_user = random.choice(online_users)
+            except IndexError:
+                self.send(text_data=json.dumps({'error': "No online users available for matching"}))
+        if matched_user:
+            if user.pk >= matched_user.pk:
+                room_name = f"{user.pk}-{matched_user.pk}"
+            else:
+                room_name = f"{matched_user.pk}-{user.pk}"
+            self.send(text_data=json.dumps({'redirect': f'/chat/{room_name}'}))
 
-        if user.pk >= matched_user.pk:
-            room_name = f"{user.pk}-{matched_user.pk}"
-        else:
-            room_name = f"{matched_user.pk}-{user.pk}"
-        # Redirect the users to the chat room
-        self.send(text_data=json.dumps({'redirect': f'/chat/{room_name}'}))
+    def send_redirect(self, event):
+        print(event, "eventtttttttt")
+        room_name = event['redirect']
+        redirect_url = {'redirect': room_name}
+        self.send(text_data=json.dumps(redirect_url))
