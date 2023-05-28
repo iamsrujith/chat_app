@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-
+{% load widget_tweaks %}
 {% block content %}
 <div class="container mt-5">
     <div class="row justify-content-center">
@@ -10,61 +10,33 @@
 
                 <div class="form-group">
                     <label for="id_full_name">Full Name</label>
-                    <input type="text" class="form-control" id="id_full_name" name="full_name" required>
+                    {% render_field form.full_name class="form-control" id="id_full_name" name="full_name" required="True" %}
                 </div>
 
                 <div class="form-group">
                     <label for="id_email">Email</label>
-                    <input type="email" class="form-control" id="id_email" name="email" required>
+                    {% render_field form.email class="form-control" id="id_email" name="email" required="True" %}
                 </div>
 
                 <div class="form-group">
                     <label for="id_phone_number">Phone Number</label>
-                    <input type="text" class="form-control" id="id_phone_number" name="phone_number" required>
+                    {% render_field form.phone_number class="form-control" id="id_phone_number" name="phone_number" required="True" %}
                 </div>
 
                 <div class="form-group">
                     <label for="id_gender">Gender</label>
-                    <select class="form-control" id="id_gender" name="gender" required>
-                        <option value="male">Male</option>
-                        <option value="female">Female</option>
-                        <option value="others">Others</option>
-                    </select>
+                    {% render_field form.gender class="form-control" id="id_gender" name="gender" required="True" %}
                 </div>
 
                 <div class="form-group">
-                    <label>Interests</label>
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" id="id_interests_food" name="interests"
-                               value="food">
-                        <label class="form-check-label" for="id_interests_food">Food</label>
-                    </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" id="id_interests_travel" name="interests"
-                               value="travel">
-                        <label class="form-check-label" for="id_interests_travel">Travel</label>
-                    </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" id="id_interests_movies" name="interests"
-                               value="movies">
-                        <label class="form-check-label" for="id_interests_movies">Movies</label>
-                    </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" id="id_interests_hiking" name="interests"
-                               value="hiking">
-                        <label class="form-check-label" for="id_interests_hiking">Hiking</label>
-                    </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" id="id_interests_cars" name="interests"
-                               value="cars">
-                        <label class="form-check-label" for="id_interests_cars">Cars</label>
-                    </div>
+                    <label for="id_interests">Interests</label>
+                    {% render_field form.interests id="id_interests" name="interests" %}
                 </div>
 
 
                 <div class="form-group">
                     <label for="id_password">Password</label>
-                    <input type="password" class="form-control" id="id_password" name="password" required>
+                    {% render_field form.password class="form-control" id="id_password" name="password" required="True" %}
                 </div>
 
                 <button type="submit" class="btn btn-primary">Sign Up</button>

@@ -13,7 +13,6 @@ class ChatConsumer(WebsocketConsumer):
         self.room_name = self.scope["url_route"]["kwargs"]["room_name"]
         self.room_group_name = "chat_%s" % self.room_name
 
-        # Join room group
         async_to_sync(self.channel_layer.group_add)(
             self.room_group_name, self.channel_name
         )
@@ -21,13 +20,11 @@ class ChatConsumer(WebsocketConsumer):
         self.accept()
 
     def disconnect(self, close_code):
-        # Leave room group
         async_to_sync(self.channel_layer.group_discard)(
             self.room_group_name, self.channel_name
         )
 
     def receive(self, text_data):
-        # Handle incoming message
         text_data_json = json.loads(text_data)
         print(text_data_json)
         message = text_data_json["message"]
@@ -42,12 +39,10 @@ class ChatConsumer(WebsocketConsumer):
         )
 
     def chat_message(self, event):
-        # Send the message to the WebSocket
         try:
             print(event)
             message = event['message']
             username = event['username']
-            # Send the message to the WebSocket
             self.send(text_data=json.dumps({
                 'message': message,
                 'username': username
@@ -78,7 +73,6 @@ class MatchingConsumer(WebsocketConsumer):
             text_data_json = json.loads(text_data)
             print(text_data_json, "cdcdxsc")
             redirect = text_data_json["redirect"]
-            # self.send(text_data=json.dumps({'redirect': redirect}))
             async_to_sync(self.channel_layer.group_send)(
                 self.room_group_name,
                 {
@@ -92,7 +86,7 @@ class MatchingConsumer(WebsocketConsumer):
     @database_sync_to_async
     def match_users(self):
         user = self.scope['user']
-        online_users = User.objects.filter(is_online=True, is_ready=True).exclude(pk=user.pk)
+        online_users = User.objects.filter(is_online=True, is_ready=True, in_chat=False).exclude(pk=user.pk)
         matched_users = []
         matched_user = []
         for i in online_users:

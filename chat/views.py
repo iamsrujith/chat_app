@@ -1,7 +1,3 @@
-import random
-
-from asgiref.sync import async_to_sync
-from channels.layers import get_channel_layer
 from django.contrib.auth import get_user_model, authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
@@ -32,6 +28,8 @@ def connect(request):
         current_user = User.objects.get(pk=request.user.pk)
         if not current_user.is_ready:
             current_user.is_ready = True
+        if current_user.in_chat:
+            current_user.in_chat = False
         current_user.save()
     return render(request, 'connect.html')
 
@@ -42,8 +40,10 @@ def chat(request, room_name):
         current_user = User.objects.get(pk=request.user.pk)
         if not current_user.in_chat:
             current_user.in_chat = True
+        if current_user.is_ready:
+            current_user.is_ready = False
         current_user.save()
-    return render(request, 'index.html')
+    return render(request, 'chat.html')
 
 
 def signup(request):
@@ -89,41 +89,6 @@ def logout_view(request):
     return redirect('login')
 
 
-@login_required
-def match_users(request):
-    user = request.user
-    online_users = User.objects.filter(is_online=True).exclude(pk=user.pk)
-    matched_users = []
-    for i in online_users:
-        for interest in i.interests:
-            if interest in user.interests:
-                matched_users.append(i)
-                break
-
-    if matched_users:
-        matched_user = random.choice(matched_users)
-    else:
-        matched_user = random.choice(online_users)
-
-    # Create a chat room name based on user IDs
-    room_name = f"{user.pk}-{matched_user.pk}"
-    # print(room_name)
-
-    # Get the channel layer
-    channel_layer = get_channel_layer()
-
-    # Send the redirect message to the matched user's channel group
-    async_to_sync(channel_layer.group_send)(
-        f"chat_{room_name}",
-        {
-            'type': 'chat_message',
-            'text': f'/chat/{room_name}'
-        }
-    )
-
-    return HttpResponse(f'/chat/{room_name}')
-
-
 def update_status(request):
     user = request.GET.get("user")
     status = request.GET.get("status")
@@ -137,5 +102,4 @@ def update_status(request):
             updated_status = "Offline"
         user.save()
 
-    # Return the updated content as HTTP response
     return HttpResponse(updated_status)
