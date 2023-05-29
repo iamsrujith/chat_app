@@ -42,6 +42,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     full_name = models.CharField(max_length=255, blank=True, default='')
     email = models.EmailField(blank=True, default='', unique=True)
     phone_number = models.CharField(max_length=30, blank=True, null=True)
+    country = models.CharField(max_length=255, blank=True, default='')
     gender = models.CharField(choices=GENDER, max_length=20)
     interests = MultiSelectField(choices=INTEREST_CHOICES,
                                  max_choices=3,

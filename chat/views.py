@@ -38,12 +38,13 @@ def connect(request):
 def chat(request, room_name):
     if request.user is not None:
         current_user = User.objects.get(pk=request.user.pk)
+        matched_user = User.objects.get(pk=[pk for pk in room_name.split("-") if pk != str(request.user.pk)][0])
         if not current_user.in_chat:
             current_user.in_chat = True
         if current_user.is_ready:
             current_user.is_ready = False
         current_user.save()
-    return render(request, 'chat.html')
+    return render(request, 'chat.html', {"matched_user": matched_user})
 
 
 def signup(request):

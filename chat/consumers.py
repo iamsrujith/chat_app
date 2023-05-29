@@ -26,7 +26,6 @@ class ChatConsumer(WebsocketConsumer):
 
     def receive(self, text_data):
         text_data_json = json.loads(text_data)
-        print(text_data_json)
         message = text_data_json["message"]
         username = text_data_json["username"]
         async_to_sync(self.channel_layer.group_send)(
@@ -40,7 +39,6 @@ class ChatConsumer(WebsocketConsumer):
 
     def chat_message(self, event):
         try:
-            print(event)
             message = event['message']
             username = event['username']
             self.send(text_data=json.dumps({
@@ -71,7 +69,6 @@ class MatchingConsumer(WebsocketConsumer):
     def receive(self, text_data):
         try:
             text_data_json = json.loads(text_data)
-            print(text_data_json, "cdcdxsc")
             redirect = text_data_json["redirect"]
             async_to_sync(self.channel_layer.group_send)(
                 self.room_group_name,
@@ -110,7 +107,6 @@ class MatchingConsumer(WebsocketConsumer):
             self.send(text_data=json.dumps({'redirect': f'/chat/{room_name}'}))
 
     def send_redirect(self, event):
-        print(event, "eventtttttttt")
         room_name = event['redirect']
         redirect_url = {'redirect': room_name}
         self.send(text_data=json.dumps(redirect_url))

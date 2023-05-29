@@ -19,13 +19,18 @@
                 </div>
 
                 <div class="form-group">
+                    <label for="id_country">Country</label>
+                    {% render_field form.country class="form-control" id="id_country" name="country" %}
+                </div>
+
+                <div class="form-group">
                     <label for="id_phone_number">Phone Number</label>
-                    {% render_field form.phone_number class="form-control" id="id_phone_number" name="phone_number" required="True" %}
+                    {% render_field form.phone_number class="form-control" id="id_phone_number" name="phone_number" %}
                 </div>
 
                 <div class="form-group">
                     <label for="id_gender">Gender</label>
-                    {% render_field form.gender class="form-control" id="id_gender" name="gender" required="True" %}
+                    {% render_field form.gender class="form-control" id="id_gender" name="gender" %}
                 </div>
 
                 <div class="form-group">

@@ -1,7 +1,7 @@
 const chatLog = document.getElementById('chat-log');
 const chatForm = document.getElementById('chat-form');
 const chatMessageInput = document.getElementById('chat-message-input');
-const user_email = JSON.parse(document.getElementById('user_email').textContent);
+const user_name = JSON.parse(document.getElementById('user_name').textContent);
 
 let loc = window.location
 let wsStart = 'ws://'
@@ -33,7 +33,7 @@ chatForm.addEventListener('submit', function(event) {
     const message = chatMessageInput.value;
     socket.send(JSON.stringify({
         'message': message,
-        'username': user_email
+        'username': user_name
     }));
     chatMessageInput.value = '';
 });
