@@ -1,6 +1,5 @@
 const userElement = document.getElementById('user');
 const userData = JSON.parse(userElement.textContent);
-console.log(user)
 let loc = window.location;
 let wsStart = 'ws://';
 const connectDiv = document.querySelector('.connect');
@@ -23,11 +22,8 @@ socket.onmessage = function(event) {
     const data = JSON.parse(event.data);
     if ('redirect' in data) {
         const redirect = data.redirect;
-        console.log(data, "rrrredirecttttt")
         const userIds = redirect.match(/\d+/g).map(Number);
-        console.log(userIds, "user idsssss")
         if (userIds.includes(userData)) {
-            console.log(redirect, "if consjpidonsdinoisdnoiwndsoinsdoi")
             window.location.href = redirect;
         }
         socket.send(JSON.stringify({
